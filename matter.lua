@@ -14,6 +14,7 @@ function MatterUi:MakeWindow(windowConfig)
     local Window = Instance.new("Frame")
     local Panel = Instance.new("Frame")
     local Title = Instance.new("TextLabel")
+    local TitleIcon = Instance.new("ImageLabel")
     local CloseButton = Instance.new("TextButton")
     local LeftPanel = Instance.new("Frame")
     local TabFrame = Instance.new("Frame")
@@ -37,11 +38,19 @@ function MatterUi:MakeWindow(windowConfig)
     Title.Name = "Title"
     Title.Parent = Panel
     Title.BackgroundTransparency = 1
-    Title.Size = UDim2.new(0.8, 0, 1, 0)
+    Title.Position = UDim2.new(0.1, 25, 0, 0) -- Offset for icon
+    Title.Size = UDim2.new(0.7, 0, 1, 0)
     Title.Font = Enum.Font.SourceSansBold
     Title.Text = windowName
     Title.TextColor3 = Color3.new(1, 1, 1)
     Title.TextScaled = true
+
+    TitleIcon.Name = "TitleIcon"
+    TitleIcon.Parent = Panel
+    TitleIcon.BackgroundTransparency = 1
+    TitleIcon.Position = UDim2.new(0, 5, 0.2, 0)
+    TitleIcon.Size = UDim2.new(0, 35, 0, 35)
+    TitleIcon.Image = "rbxassetid://0" -- Replace with your desired image ID
 
     CloseButton.Name = "CloseButton"
     CloseButton.Parent = Panel
@@ -61,9 +70,39 @@ function MatterUi:MakeWindow(windowConfig)
 
     TabFrame.Name = "TabFrame"
     TabFrame.Parent = Window
-    TabFrame.BackgroundColor3 = Color3.new(0.4, 0.164706, 1)
+    TabFrame.BackgroundColor3 = Window.BackgroundColor3 -- Same color as Window
     TabFrame.Size = UDim2.new(0.7, 0, 1, -45)
     TabFrame.Position = UDim2.new(0.3, 0, 0, 45)
+
+    -- Make Panel Draggable
+    local dragging = false
+    local dragStart, startPos
+
+    Panel.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = Window.Position
+        end
+    end)
+
+    Panel.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            Window.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    Panel.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
 
     -- Close Button Functionality
     CloseButton.MouseButton1Click:Connect(function()
@@ -84,19 +123,29 @@ end
 -- Create a new tab
 function MatterUi:MakeTab(tabConfig)
     local tabName = tabConfig.Name or "New Tab"
+    local tabIcon = tabConfig.Icon or "rbxassetid://0"
 
     -- Create a new Tab Button
     local TabButton = Instance.new("TextButton")
+    local TabIcon = Instance.new("ImageLabel")
+
     TabButton.Name = tabName
     TabButton.Parent = self.LeftPanel
     TabButton.BackgroundColor3 = Color3.new(1, 1, 1)
     TabButton.BackgroundTransparency = 0.3
     TabButton.Size = UDim2.new(1, 0, 0, 40)
-    TabButton.Position = UDim2.new(0, 0, #self.Elements.Tabs * 0.1, 0)
+    TabButton.Position = UDim2.new(0, 0, (#self.Elements.Tabs * 0.1), 0)
     TabButton.Font = Enum.Font.SourceSansBold
-    TabButton.Text = tabName
+    TabButton.Text = "   " .. tabName -- Indented to leave space for the icon
     TabButton.TextColor3 = Color3.new(0, 0, 0)
     TabButton.TextScaled = true
+
+    TabIcon.Name = "TabIcon"
+    TabIcon.Parent = TabButton
+    TabIcon.BackgroundTransparency = 1
+    TabIcon.Position = UDim2.new(0, 5, 0.2, 0)
+    TabIcon.Size = UDim2.new(0, 30, 0, 30)
+    TabIcon.Image = tabIcon
 
     -- Create a corresponding Tab Content Frame
     local TabContentFrame = Instance.new("Frame")
