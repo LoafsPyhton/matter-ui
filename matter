@@ -1,185 +1,156 @@
--- MatterUi Library for Roblox with Tab and Button Creation Shortcuts
-
 local MatterUi = {}
-MatterUi.__index = MatterUi
+MatterUi.Elements = {
+    Tabs = {},
+    Buttons = {}
+}
 
--- Function to create a new window
-function MatterUi:MakeWindow(config)
-    -- Create the UI elements
-    local MatterUiInstance = Instance.new("ScreenGui")
-    MatterUiInstance.Name = config.Name or "Matter Ui"
-    MatterUiInstance.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-    MatterUiInstance.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+-- Create a new window
+function MatterUi:MakeWindow(windowConfig)
+    local windowName = windowConfig.Name or "Matter Ui"
+    local closeCallback = windowConfig.CloseCallback
 
+    -- Create GUI Components
+    local MatterUi = Instance.new("ScreenGui")
     local Window = Instance.new("Frame")
-    Window.Name = "Window"
-    Window.Parent = MatterUiInstance
-    Window.BackgroundColor3 = config.BackgroundColor or Color3.new(0.4, 0.164706, 1)
-    Window.BorderColor3 = config.BorderColor or Color3.new(0, 0, 0)
-    Window.BorderSizePixel = 0
-    Window.Position = config.Position or UDim2.new(0.315634221, 0, 0.146964863, 0)
-    Window.Size = config.Size or UDim2.new(0, 500, 0, 441)
-
     local Panel = Instance.new("Frame")
+    local Title = Instance.new("TextLabel")
+    local CloseButton = Instance.new("TextButton")
+    local LeftPanel = Instance.new("Frame")
+    local TabFrame = Instance.new("Frame")
+
+    -- Properties
+    MatterUi.Name = "Matter Ui"
+    MatterUi.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    MatterUi.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+    Window.Name = "Window"
+    Window.Parent = MatterUi
+    Window.BackgroundColor3 = Color3.new(0.4, 0.164706, 1)
+    Window.Position = UDim2.new(0.315, 0, 0.147, 0)
+    Window.Size = UDim2.new(0, 500, 0, 441)
+
     Panel.Name = "Panel"
     Panel.Parent = Window
-    Panel.BackgroundColor3 = config.PanelColor or Color3.new(0.32549, 0.101961, 1)
-    Panel.BorderColor3 = Color3.new(0, 0, 0)
-    Panel.BorderSizePixel = 0
-    Panel.Size = UDim2.new(0, 500, 0, 45)
+    Panel.BackgroundColor3 = Color3.new(0.32549, 0.101961, 1)
+    Panel.Size = UDim2.new(1, 0, 0, 45)
 
-    local Title = Instance.new("TextLabel")
     Title.Name = "Title"
     Title.Parent = Panel
     Title.BackgroundTransparency = 1
-    Title.Size = UDim2.new(0, 192, 0, 45)
+    Title.Size = UDim2.new(0.8, 0, 1, 0)
     Title.Font = Enum.Font.SourceSansBold
-    Title.Text = config.Name or "Matter Ui"
-    Title.TextColor3 = config.TextColor or Color3.new(1, 1, 1)
+    Title.Text = windowName
+    Title.TextColor3 = Color3.new(1, 1, 1)
     Title.TextScaled = true
 
-    local CloseButton = Instance.new("TextButton")
     CloseButton.Name = "CloseButton"
     CloseButton.Parent = Panel
     CloseButton.BackgroundTransparency = 1
-    CloseButton.Position = UDim2.new(0.903999984, 0, 0, 0)
-    CloseButton.Size = UDim2.new(0, 48, 0, 45)
+    CloseButton.Size = UDim2.new(0.2, 0, 1, 0)
+    CloseButton.Position = UDim2.new(0.8, 0, 0, 0)
     CloseButton.Font = Enum.Font.SourceSansBold
     CloseButton.Text = "X"
     CloseButton.TextColor3 = Color3.new(1, 0, 0)
     CloseButton.TextScaled = true
 
-    CloseButton.MouseButton1Click:Connect(function()
-        if config.CloseCallback then
-            config.CloseCallback()
-        end
-        MatterUiInstance:Destroy()  -- Close the window when "X" is clicked
-    end)
-
-    -- Left Panel for Tabs
-    local LeftPanel = Instance.new("Frame")
     LeftPanel.Name = "LeftPanel"
     LeftPanel.Parent = Window
     LeftPanel.BackgroundColor3 = Color3.new(0.32549, 0.101961, 1)
-    LeftPanel.BorderColor3 = Color3.new(0, 0, 0)
-    LeftPanel.BorderSizePixel = 0
-    LeftPanel.Position = UDim2.new(0, 0, 0.10204082, 0)
-    LeftPanel.Size = UDim2.new(0, 151, 0, 396)
+    LeftPanel.Size = UDim2.new(0.3, 0, 1, -45)
+    LeftPanel.Position = UDim2.new(0, 0, 0, 45)
 
-    -- Tab Frame for the content
-    local TabFrame = Instance.new("Frame")
     TabFrame.Name = "TabFrame"
     TabFrame.Parent = Window
     TabFrame.BackgroundColor3 = Color3.new(0.4, 0.164706, 1)
-    TabFrame.BorderColor3 = Color3.new(0, 0, 0)
-    TabFrame.BorderSizePixel = 0
-    TabFrame.Position = UDim2.new(0.301999986, 0, 0.10204082, 0)
-    TabFrame.Size = UDim2.new(0, 349, 0, 396)
+    TabFrame.Size = UDim2.new(0.7, 0, 1, -45)
+    TabFrame.Position = UDim2.new(0.3, 0, 0, 45)
 
-    -- Store for tabs and buttons
-    MatterUi.Elements = {
-        Tabs = {},
-        Buttons = {}
-    }
+    -- Close Button Functionality
+    CloseButton.MouseButton1Click:Connect(function()
+        MatterUi:Destroy()
+        if closeCallback then
+            closeCallback()
+        end
+    end)
 
-    -- Function to create a new tab
-    function MatterUi:MakeTab(tabConfig)
-        local tabName = tabConfig.Name or "NewTab"
-        
-        -- Create a new TabButton on the left panel
-        local TabButton = Instance.new("TextButton")
-        TabButton.Name = tabName
-        TabButton.Parent = LeftPanel
-        TabButton.BackgroundColor3 = Color3.new(1, 1, 1)
-        TabButton.BackgroundTransparency = 0.3
-        TabButton.BorderColor3 = Color3.new(0, 0, 0)
-        TabButton.BorderSizePixel = 0
-        TabButton.Size = UDim2.new(0, 151, 0, 45)
-        TabButton.Font = Enum.Font.SourceSansBold
-        TabButton.Text = tabName
-        TabButton.TextColor3 = Color3.new(0, 0, 0)
-        TabButton.TextScaled = true
+    -- Store references for later use
+    self.Window = Window
+    self.LeftPanel = LeftPanel
+    self.TabFrame = TabFrame
 
-        -- Create a new frame for the tab content
-        local TabContentFrame = Instance.new("Frame")
-        TabContentFrame.Name = tabName .. "Content"
-        TabContentFrame.Parent = TabFrame
-        TabContentFrame.BackgroundColor3 = Color3.new(1, 1, 1)
-        TabContentFrame.Size = UDim2.new(0, 349, 0, 396)
-        TabContentFrame.Visible = false -- Initially hidden
-
-        -- Add functionality to show/hide TabFrame when the tab button is clicked
-        TabButton.MouseButton1Click:Connect(function()
-            -- Hide all other tabs
-            for _, frame in pairs(TabFrame:GetChildren()) do
-                if frame:IsA("Frame") then
-                    frame.Visible = false
-                end
-            end
-
-            -- Show the selected tab content
-            TabContentFrame.Visible = true
-        end)
-
-        -- Store the tab details in the Elements table
-        table.insert(MatterUi.Elements.Tabs, tabName)
-
-        -- Return the tab object for button addition
-        return {
-            AddButton = function(self, buttonConfig)
-                -- Create the button for the tab
-                local Button = Instance.new("TextButton")
-                Button.Name = buttonConfig.Name or "NewButton"
-                Button.Parent = TabContentFrame
-                Button.BackgroundColor3 = Color3.new(1, 1, 1)
-                Button.BackgroundTransparency = 0.3
-                Button.BorderColor3 = Color3.new(0, 0, 0)
-                Button.BorderSizePixel = 0
-                Button.Size = UDim2.new(0, 151, 0, 45)
-                Button.Font = Enum.Font.SourceSansBold
-                Button.Text = buttonConfig.Name or "New Button"
-                Button.TextColor3 = Color3.new(0, 0, 0)
-                Button.TextScaled = true
-                
-                -- Button callback
-                Button.MouseButton1Click:Connect(function()
-                    if buttonConfig.Callback then
-                        buttonConfig.Callback()
-                    end
-                end)
-
-                -- Store button in the Elements table
-                table.insert(MatterUi.Elements.Buttons, buttonConfig.Name)
-            end
-        }
-    end
-
-    -- Return the MatterUi instance for use in Roblox
-    return MatterUiInstance
+    return self
 end
 
--- Example of creating a window and tabs dynamically
-local Window = MatterUi:MakeWindow({
-    Name = "Eclipse UI",
-    CloseCallback = function()
-        print("Window closed")
+-- Create a new tab
+function MatterUi:MakeTab(tabConfig)
+    local tabName = tabConfig.Name or "New Tab"
+
+    -- Create a new Tab Button
+    local TabButton = Instance.new("TextButton")
+    TabButton.Name = tabName
+    TabButton.Parent = self.LeftPanel
+    TabButton.BackgroundColor3 = Color3.new(1, 1, 1)
+    TabButton.BackgroundTransparency = 0.3
+    TabButton.Size = UDim2.new(1, 0, 0, 40)
+    TabButton.Position = UDim2.new(0, 0, #self.Elements.Tabs * 0.1, 0)
+    TabButton.Font = Enum.Font.SourceSansBold
+    TabButton.Text = tabName
+    TabButton.TextColor3 = Color3.new(0, 0, 0)
+    TabButton.TextScaled = true
+
+    -- Create a corresponding Tab Content Frame
+    local TabContentFrame = Instance.new("Frame")
+    TabContentFrame.Name = tabName .. "Content"
+    TabContentFrame.Parent = self.TabFrame
+    TabContentFrame.BackgroundColor3 = Color3.new(1, 1, 1)
+    TabContentFrame.Size = UDim2.new(1, 0, 1, 0)
+    TabContentFrame.Visible = false -- Initially hidden
+
+    -- Toggle Visibility of Tab Content
+    TabButton.MouseButton1Click:Connect(function()
+        for _, frame in pairs(self.TabFrame:GetChildren()) do
+            if frame:IsA("Frame") then
+                frame.Visible = false
+            end
+        end
+        TabContentFrame.Visible = true
+    end)
+
+    -- Store tab in the Elements table
+    table.insert(self.Elements.Tabs, TabButton)
+
+    return {
+        AddButton = function(self, buttonConfig)
+            local buttonName = buttonConfig.Name or "New Button"
+            local callback = buttonConfig.Callback or function() end
+
+            -- Create a Button in the Tab Content Frame
+            local Button = Instance.new("TextButton")
+            Button.Name = buttonName
+            Button.Parent = TabContentFrame
+            Button.BackgroundColor3 = Color3.new(1, 1, 1)
+            Button.BackgroundTransparency = 0.3
+            Button.Size = UDim2.new(0.5, 0, 0, 40)
+            Button.Position = UDim2.new(0, 10, (#TabContentFrame:GetChildren() - 1) * 0.1, 0)
+            Button.Font = Enum.Font.SourceSansBold
+            Button.Text = buttonName
+            Button.TextColor3 = Color3.new(0, 0, 0)
+            Button.TextScaled = true
+
+            -- Connect the Button's Click Event
+            Button.MouseButton1Click:Connect(callback)
+
+            -- Store button in the Elements table
+            table.insert(MatterUi.Elements.Buttons, Button)
+        end
+    }
+end
+
+-- Destroy the UI
+function MatterUi:Destroy()
+    if self.Window and self.Window.Parent then
+        self.Window.Parent:Destroy()
     end
-})
+end
 
--- Create a new Tab and add a button
-local MainTab = Window:MakeTab({
-    Name = "Main Tab"
-})
-
--- Store the tab element
-MatterUi.Elements.MainTab = MainTab
-
-MainTab:AddButton({
-    Name = "Click Me!",
-    Callback = function()
-        print("Button clicked!")
-    end    
-})
-
--- Store button in MatterUi Elements
-table.insert(MatterUi.Elements, "Click Me! Button")
+return MatterUi
