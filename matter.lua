@@ -1,8 +1,19 @@
 local MatterUi = {}
 MatterUi.Elements = {
     Tabs = {},
-    Buttons = {}
+    Buttons = {},
+    Sliders = {}
 }
+
+-- Function to generate a random icon for the Close Button
+local function getRandomIcon()
+    local iconIds = {
+        "rbxassetid://12345678", -- Replace these with actual asset IDs
+        "rbxassetid://23456789",
+        "rbxassetid://34567890"
+    }
+    return iconIds[math.random(1, #iconIds)]
+end
 
 -- Create a new window
 function MatterUi:MakeWindow(windowConfig)
@@ -55,12 +66,19 @@ function MatterUi:MakeWindow(windowConfig)
     CloseButton.Name = "CloseButton"
     CloseButton.Parent = Panel
     CloseButton.BackgroundTransparency = 1
-    CloseButton.Size = UDim2.new(0.2, 0, 1, 0)
-    CloseButton.Position = UDim2.new(0.8, 0, 0, 0)
+    CloseButton.Size = UDim2.new(0.15, 0, 1, 0) -- Reduced size for better fit
+    CloseButton.Position = UDim2.new(0.85, -10, 0, 0) -- Slightly moved left
     CloseButton.Font = Enum.Font.SourceSansBold
-    CloseButton.Text = "X"
+    CloseButton.Text = ""
     CloseButton.TextColor3 = Color3.new(1, 0, 0)
     CloseButton.TextScaled = true
+
+    local CloseButtonIcon = Instance.new("ImageLabel")
+    CloseButtonIcon.Name = "CloseButtonIcon"
+    CloseButtonIcon.Parent = CloseButton
+    CloseButtonIcon.BackgroundTransparency = 1
+    CloseButtonIcon.Size = UDim2.new(1, 0, 1, 0)
+    CloseButtonIcon.Image = getRandomIcon() -- Get a random icon
 
     LeftPanel.Name = "LeftPanel"
     LeftPanel.Parent = Window
@@ -70,7 +88,7 @@ function MatterUi:MakeWindow(windowConfig)
 
     TabFrame.Name = "TabFrame"
     TabFrame.Parent = Window
-    TabFrame.BackgroundColor3 = Window.BackgroundColor3 -- Same color as Window
+    TabFrame.BackgroundColor3 = Color3.fromRGB(102, 42, 255)
     TabFrame.Size = UDim2.new(0.7, 0, 1, -45)
     TabFrame.Position = UDim2.new(0.3, 0, 0, 45)
 
@@ -120,86 +138,72 @@ function MatterUi:MakeWindow(windowConfig)
     return self
 end
 
--- Create a new tab
-function MatterUi:MakeTab(tabConfig)
-    local tabName = tabConfig.Name or "New Tab"
-    local tabIcon = tabConfig.Icon or "rbxassetid://0"
+-- Create a slider
+function MatterUi:AddSlider(sliderConfig)
+    local sliderName = sliderConfig.Name or "Slider"
+    local min = sliderConfig.Min or 0
+    local max = sliderConfig.Max or 100
+    local default = sliderConfig.Default or min
+    local increment = sliderConfig.Increment or 1
+    local callback = sliderConfig.Callback or function() end
 
-    -- Create a new Tab Button
-    local TabButton = Instance.new("TextButton")
-    local TabIcon = Instance.new("ImageLabel")
+    -- Create Slider Components
+    local SliderFrame = Instance.new("Frame")
+    local SliderButton = Instance.new("TextButton")
+    local Amount = Instance.new("TextLabel")
 
-    TabButton.Name = tabName
-    TabButton.Parent = self.LeftPanel
-    TabButton.BackgroundColor3 = Color3.new(1, 1, 1)
-    TabButton.BackgroundTransparency = 0.3
-    TabButton.Size = UDim2.new(1, 0, 0, 40)
-    TabButton.Position = UDim2.new(0, 0, (#self.Elements.Tabs * 0.1), 0)
-    TabButton.Font = Enum.Font.SourceSansBold
-    TabButton.Text = "   " .. tabName -- Indented to leave space for the icon
-    TabButton.TextColor3 = Color3.new(0, 0, 0)
-    TabButton.TextScaled = true
+    -- SliderFrame properties
+    SliderFrame.Name = sliderName
+    SliderFrame.Parent = self.TabFrame
+    SliderFrame.BackgroundColor3 = Color3.new(1, 1, 1)
+    SliderFrame.BackgroundTransparency = 0.2
+    SliderFrame.Size = UDim2.new(0.8, 0, 0, 30)
+    SliderFrame.Position = UDim2.new(0.1, 0, (#self.Elements.Sliders * 0.12), 0)
 
-    TabIcon.Name = "TabIcon"
-    TabIcon.Parent = TabButton
-    TabIcon.BackgroundTransparency = 1
-    TabIcon.Position = UDim2.new(0, 5, 0.2, 0)
-    TabIcon.Size = UDim2.new(0, 30, 0, 30)
-    TabIcon.Image = tabIcon
+    -- SliderButton properties
+    SliderButton.Name = "SliderButton"
+    SliderButton.Parent = SliderFrame
+    SliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    SliderButton.Size = UDim2.new(0.1, 0, 1, 0)
 
-    -- Create a corresponding Tab Content Frame
-    local TabContentFrame = Instance.new("Frame")
-    TabContentFrame.Name = tabName .. "Content"
-    TabContentFrame.Parent = self.TabFrame
-    TabContentFrame.BackgroundColor3 = Color3.new(1, 1, 1)
-    TabContentFrame.Size = UDim2.new(1, 0, 1, 0)
-    TabContentFrame.Visible = false -- Initially hidden
+    -- Amount Label properties
+    Amount.Name = "Amount"
+    Amount.Parent = SliderFrame
+    Amount.Text = sliderName .. ": " .. tostring(default)
+    Amount.Font = Enum.Font.SourceSansBold
+    Amount.TextScaled = true
+    Amount.TextColor3 = Color3.new(0, 0, 0)
+    Amount.Size = UDim2.new(0.8, 0, 1, 0)
+    Amount.Position = UDim2.new(0.15, 0, 0, 0)
 
-    -- Toggle Visibility of Tab Content
-    TabButton.MouseButton1Click:Connect(function()
-        for _, frame in pairs(self.TabFrame:GetChildren()) do
-            if frame:IsA("Frame") then
-                frame.Visible = false
-            end
-        end
-        TabContentFrame.Visible = true
+    -- Update slider logic
+    local dragging = false
+    SliderButton.MouseButton1Down:Connect(function()
+        dragging = true
     end)
 
-    -- Store tab in the Elements table
-    table.insert(self.Elements.Tabs, TabButton)
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local sliderSize = SliderFrame.AbsoluteSize.X
+            local sliderPos = math.clamp((input.Position.X - SliderFrame.AbsolutePosition.X) / sliderSize, 0, 1)
+            local sliderValue = math.floor(min + sliderPos * (max - min) + 0.5)
+            sliderValue = math.clamp(sliderValue, min, max)
 
-    return {
-        AddButton = function(self, buttonConfig)
-            local buttonName = buttonConfig.Name or "New Button"
-            local callback = buttonConfig.Callback or function() end
+            SliderButton.Position = UDim2.new(sliderPos, 0, 0, 0)
+            Amount.Text = sliderName .. ": " .. sliderValue
 
-            -- Create a Button in the Tab Content Frame
-            local Button = Instance.new("TextButton")
-            Button.Name = buttonName
-            Button.Parent = TabContentFrame
-            Button.BackgroundColor3 = Color3.new(1, 1, 1)
-            Button.BackgroundTransparency = 0.3
-            Button.Size = UDim2.new(0.5, 0, 0, 40)
-            Button.Position = UDim2.new(0, 10, (#TabContentFrame:GetChildren() - 1) * 0.1, 0)
-            Button.Font = Enum.Font.SourceSansBold
-            Button.Text = buttonName
-            Button.TextColor3 = Color3.new(0, 0, 0)
-            Button.TextScaled = true
-
-            -- Connect the Button's Click Event
-            Button.MouseButton1Click:Connect(callback)
-
-            -- Store button in the Elements table
-            table.insert(MatterUi.Elements.Buttons, Button)
+            callback(sliderValue)
         end
-    }
-end
+    end)
 
--- Destroy the UI
-function MatterUi:Destroy()
-    if self.Window and self.Window.Parent then
-        self.Window.Parent:Destroy()
-    end
+    game:GetService("UserInputService").InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    -- Store slider reference
+    table.insert(self.Elements.Sliders, SliderFrame)
 end
 
 return MatterUi
